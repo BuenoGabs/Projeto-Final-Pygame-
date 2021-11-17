@@ -13,7 +13,7 @@ game = True
 
 # ----- Inicia assets
 font = pygame.font.SysFont(None, 48) #fonte de texto
-text = font.render('Atire pra matar', True, (255, 0, 0)) #mensagem #deixar o texto mais leve #cor
+text = font.render('Shotto', True, (255, 0, 0)) #mensagem #deixar o texto mais leve #cor
 text_1 = font.render('Pressione Qualquer tecla', True, (0,0,255)) #mensagem #deixa o testo mais leve #cor
 # ===== Loop principal =====
 while game:
