@@ -5,7 +5,7 @@ import pygame
 pygame.init()
 
 # ----- Gera tela principal
-window = pygame.display.set_mode((500, 400))
+window = pygame.display.set_mode((1400, 750))
 pygame.display.set_caption('Gun')
 
 # ----- Inicia estruturas de dados
