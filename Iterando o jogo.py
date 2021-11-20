@@ -12,20 +12,23 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Shotto')
 
 # ----- Inicia assets
-Inimigo_WIDTH = 20
-Inimigo_HEIGHT = 20
+Inimigo_WIDTH = 10
+Inimigo_HEIGHT = 10
 protag_WHIDTH = 80
 protag_HEIGHT = 80
 font = pygame.font.SysFont(None, 70)
 background = pygame.image.load('space.png').convert()  #carrega as imagens de fundo 
 enemy_img = pygame.image.load('ghost2.jpg').convert_alpha() #carrega as imagens do inimigo
 inimigo_img_small = pygame.transform.scale(enemy_img, (Inimigo_WIDTH, Inimigo_HEIGHT))
-protag_img = pygame.image.load('rambo.png').convert_alpha()
+protag_img = pygame.image.load('megamen.png').convert_alpha()
 protag_img = pygame.transform.scale(protag_img, (protag_WHIDTH, protag_HEIGHT))
 protag_img_mirror = pygame.transform.flip(protag_img, True, False)
+bullet_img = pygame.image.load('laserRed16.png').convert_alpha()
+bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
+
 
 class Protag(pygame.sprite.Sprite):
-    def __init__(self, img):
+    def __init__(self, img, all_sprites, all_bullets, bullet_img):
         # Construtor da classe mãe (Sprite).
         pygame.sprite.Sprite.__init__(self)
 
@@ -35,6 +38,9 @@ class Protag(pygame.sprite.Sprite):
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
         self.speedy = 0
+        self.all_sprites = all_sprites
+        self.all_bullets = all_bullets
+        self.bullet_img = bullet_img
     
     def update(self):
         # Atualização da posição da protagonista
@@ -69,6 +75,11 @@ class Protag(pygame.sprite.Sprite):
         
         if self.rect.top < 0:
             self.rect.bottom = HEIGHT
+    
+    def shoot(self):
+        new_bullet = Bullet(self.bullet_img, self.rect.top, self.rect.centerx)
+        self.all_sprites.add(new_bullet)
+        self.all_bullets.add(new_bullet)
 
         
 
@@ -94,16 +105,41 @@ class Enemy(pygame.sprite.Sprite):
             self.speedx = random.randint(-3, 3)
             self.speedy = random.randint(2, 9)
 
+# Classe Bullet que representa os tiros
+class Bullet(pygame.sprite.Sprite):
+    # Construtor da classe.
+    def __init__(self, img, bottom, centerx):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = img
+        self.rect = self.image.get_rect()
+
+        # Coloca no lugar inicial definido em x, y do constutor
+        self.rect.centerx = centerx
+        self.rect.bottom = bottom
+        self.speedy = -10  # Velocidade fixa para cima
+
+    def update(self):
+        # A bala só se move no eixo y
+        self.rect.x += self.speedy
+        
+
+        # Se o tiro passar do inicio da tela, morre.
+        if self.rect.bottom < 0:
+            self.kill()
 
 
 # ----- Inicia estruturas de dados
 game = True
 clock = pygame.time.Clock()
 FPS = 30
+
 all_sprites = pygame.sprite.Group()
 all_enemy = pygame.sprite.Group()
+all_bullets = pygame.sprite.Group()
 # Criando o jogador
-player = Protag(protag_img)
+player = Protag(protag_img, all_sprites, all_bullets, bullet_img)
 all_sprites.add(player)
 # Criando os inimigos
 for i in range(8):
@@ -120,23 +156,24 @@ while game:
         # ----- Verifica consequências
         if event.type == pygame.QUIT:
             game = False
-    #verifica se apertou alguma tecla
-         # ----- Verifica consequências
-        if event.type == pygame.QUIT:
-            game = False
         # Verifica se apertou alguma tecla.
         if event.type == pygame.KEYDOWN:
             # Dependendo da tecla, altera a velocidade.
             if event.key == pygame.K_LEFT:
                 player.image = protag_img_mirror
+                bullet_img = bullet_img_mirror
                 player.speedx -= 8
             if event.key == pygame.K_RIGHT:
                 player.speedx += 8
                 player.image = protag_img
+                bullet_img = bullet_img_mirror
             if event.key == pygame.K_UP:
                 player.speedy -= 8
             if event.key == pygame.K_DOWN:
                 player.speedy += 8
+            if event.key == pygame.K_SPACE:
+                player.shoot()
+                bullet_img = bullet_img_mirror
         # Verifica se soltou alguma tecla.
         if event.type == pygame.KEYUP:
             # Dependendo da tecla, altera a velocidade.
@@ -152,16 +189,22 @@ while game:
     
     # ----- Atualiza estado do jogo
     # Atualizando a posição dos meteoros
+
     all_sprites.update()
 
     # Verifica se houve colisão entre nave e meteoro
     hits = pygame.sprite.spritecollide(player, all_enemy, True)
+    
+    #condição para o game para caso haja colisão
+    # if len(hits) > 0:
+    #     game = False
 
     # ----- Gera saídas
     window.fill((0, 0, 0))  # Preenche com a cor branca
     window.blit(background, (0, 0))
     # Desenhando meteoros
     all_sprites.draw(window)
+ 
 
     pygame.display.update()  # Mostra o novo frame para o jogador
 
