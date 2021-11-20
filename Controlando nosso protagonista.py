@@ -22,6 +22,7 @@ enemy_img = pygame.image.load('ghost2.jpg').convert_alpha() #carrega as imagens 
 inimigo_img_small = pygame.transform.scale(enemy_img, (Inimigo_WIDTH, Inimigo_HEIGHT))
 protag_img = pygame.image.load('rambo.png').convert_alpha()
 protag_img = pygame.transform.scale(protag_img, (protag_WHIDTH, protag_HEIGHT))
+protag_img_mirror = pygame.transform.flip(protag_img, True, False)
 
 class Protag(pygame.sprite.Sprite):
     def __init__(self, img):
@@ -33,16 +34,43 @@ class Protag(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
+        self.speedy = 0
     
     def update(self):
-        # Atualização da posição da nave
+        # Atualização da posição da protagonista
         self.rect.x += self.speedx
+        self.rect.y += self.speedy
 
         # Mantem dentro da tela
+        
+        # if self.rect.right > WIDTH:
+        #     self.rect.right = WIDTH
+            
+            
+        # if self.rect.left < 0:
+        #     self.rect.left = 0
+
+        # if self.rect.bottom > HEIGHT:
+        #     self.rect.bottom = HEIGHT
+        
+        # if self.rect.top < 0:
+        #     self.rect.top = 0
+        
+        #Contorno periodico
         if self.rect.right > WIDTH:
-            self.rect.right = WIDTH
-        if self.rect.left < 0:
             self.rect.left = 0
+            
+            
+        if self.rect.left < 0:
+            self.rect.right = WIDTH
+
+        if self.rect.bottom > HEIGHT:
+            self.rect.top = 0
+        
+        if self.rect.top < 0:
+            self.rect.bottom = HEIGHT
+
+        
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -53,7 +81,7 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH-Inimigo_WIDTH)
         self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
-        self.speedx = random.randint(-3, 3)
+        self.speedx = random.randint(-5, 3)
         self.speedy = random.randint(2, 9)
 
     def update(self):
@@ -65,6 +93,8 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
             self.speedx = random.randint(-3, 3)
             self.speedy = random.randint(2, 9)
+
+
 
 # ----- Inicia estruturas de dados
 game = True
@@ -96,9 +126,15 @@ while game:
         if event.type == pygame.KEYDOWN:
             # Dependendo da tecla, altera a velocidade.
             if event.key == pygame.K_LEFT:
+                player.image = protag_img_mirror
                 player.speedx -= 8
             if event.key == pygame.K_RIGHT:
                 player.speedx += 8
+                player.image = protag_img
+            if event.key == pygame.K_UP:
+                player.speedy -= 8
+            if event.key == pygame.K_DOWN:
+                player.speedy += 8
         # Verifica se soltou alguma tecla.
         if event.type == pygame.KEYUP:
             # Dependendo da tecla, altera a velocidade.
@@ -106,6 +142,11 @@ while game:
                 player.speedx += 8
             if event.key == pygame.K_RIGHT:
                 player.speedx -= 8
+            if event.key == pygame.K_UP:
+                player.speedy += 8
+            if event.key == pygame.K_DOWN:
+                player.speedy -= 8
+        
     
     # ----- Atualiza estado do jogo
     # Atualizando a posição dos meteoros
