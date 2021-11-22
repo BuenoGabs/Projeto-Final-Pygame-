@@ -12,18 +12,18 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Shotto')
 
 # ----- Inicia assets
-Inimigo_WIDTH = 10
-Inimigo_HEIGHT = 10
+Inimigo_WIDTH = 1
+Inimigo_HEIGHT = 1
 protag_WHIDTH = 80
 protag_HEIGHT = 80
 font = pygame.font.SysFont(None, 70)
-background = pygame.image.load('space.png').convert()  #carrega as imagens de fundo 
-enemy_img = pygame.image.load('ghost2.jpg').convert_alpha() #carrega as imagens do inimigo
+background = pygame.image.load('imagens Pygame/space.png').convert()  #carrega as imagens de fundo 
+enemy_img = pygame.image.load('imagens Pygame/ghost2.jpg').convert_alpha() #carrega as imagens do inimigo
 inimigo_img_small = pygame.transform.scale(enemy_img, (Inimigo_WIDTH, Inimigo_HEIGHT))
-protag_img = pygame.image.load('megamen.png').convert_alpha()
+protag_img = pygame.image.load('imagens Pygame/megamen.png').convert_alpha()
 protag_img = pygame.transform.scale(protag_img, (protag_WHIDTH, protag_HEIGHT))
 protag_img_mirror = pygame.transform.flip(protag_img, True, False)
-bullet_img = pygame.image.load('laserRed16.png').convert_alpha()
+bullet_img = pygame.image.load('imagens Pygame/laserRed16.png').convert_alpha()
 bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
 
 
@@ -77,7 +77,9 @@ class Protag(pygame.sprite.Sprite):
             self.rect.bottom = HEIGHT
     
     def shoot(self):
-        new_bullet = Bullet(self.bullet_img, self.rect.top, self.rect.centerx)
+        pos_bullet = self.rect.top + 50
+        print(pos_bullet)
+        new_bullet = Bullet(self.bullet_img, pos_bullet, self.rect.centerx)
         self.all_sprites.add(new_bullet)
         self.all_bullets.add(new_bullet)
 
@@ -118,7 +120,7 @@ class Bullet(pygame.sprite.Sprite):
         # Coloca no lugar inicial definido em x, y do constutor
         self.rect.centerx = centerx
         self.rect.bottom = bottom
-        self.speedy = -10  # Velocidade fixa para cima
+        self.speedy = 10  # Velocidade fixa para o lado
 
     def update(self):
         # A bala só se move no eixo y
@@ -188,7 +190,7 @@ while game:
         
     
     # ----- Atualiza estado do jogo
-    # Atualizando a posição dos meteoros
+    # Atualizando a posição dos inimigos
 
     all_sprites.update()
 
@@ -202,7 +204,7 @@ while game:
     # ----- Gera saídas
     window.fill((0, 0, 0))  # Preenche com a cor branca
     window.blit(background, (0, 0))
-    # Desenhando meteoros
+    # Desenhando inimigos
     all_sprites.draw(window)
  
 
