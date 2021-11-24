@@ -14,18 +14,34 @@ window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Shotto')
 
 # ----- Inicia assets
-Inimigo_WIDTH = 1
-Inimigo_HEIGHT = 1
+Inimigo_WIDTH = 100
+Inimigo_HEIGHT = 100
 protag_WHIDTH = 80
 protag_HEIGHT = 80
+dados = {}
+dados['background'] = pygame.image.load('img/space.png').convert()
+dados['enemy_img'] =  pygame.image.load('img/ghost_pac_r.png').convert_alpha()
+dados['inimigo_img_small'] = pygame.transform.scale(dados['enemy_img'], (Inimigo_WIDTH, Inimigo_HEIGHT))
+dados['protag_img'] = pygame.image.load('img/megamen.png').convert_alpha()
+dados['protag_img'] = pygame.transform.scale(dados['protag_img'], (protag_WHIDTH, protag_HEIGHT))
+dados['bullet_img'] = pygame.image.load('img/laserRed16.png').convert_alpha()
+explosion_anim = []
+for i in range(9):
+    # Os arquivos de animação são numerados de 00 a 08
+    filename = 'img/regularExplosion0{}.png'.format(i)
+    img = pygame.image.load(filename).convert()
+    img = pygame.transform.scale(img, (32, 32))
+    explosion_anim.append(img)
+dados["explosion_anim"] = explosion_anim
+
 font = pygame.font.SysFont(None, 70)
-background = pygame.image.load('imagens Pygame/space.png').convert()  #carrega as imagens de fundo 
-enemy_img = pygame.image.load('imagens Pygame/ghost2.jpg').convert_alpha() #carrega as imagens do inimigo
+background = pygame.image.load('img/space.png').convert()  #carrega as imagens de fundo 
+enemy_img = pygame.image.load('img/ghost_pac_r.png').convert_alpha() #carrega as imagens do inimigo
 inimigo_img_small = pygame.transform.scale(enemy_img, (Inimigo_WIDTH, Inimigo_HEIGHT))
-protag_img = pygame.image.load('imagens Pygame/megamen.png').convert_alpha()
+protag_img = pygame.image.load('img/megamen.png').convert_alpha()
 protag_img = pygame.transform.scale(protag_img, (protag_WHIDTH, protag_HEIGHT))
 protag_img_mirror = pygame.transform.flip(protag_img, True, False)
-bullet_img = pygame.image.load('imagens Pygame/laserRed16.png').convert_alpha()
+bullet_img = pygame.image.load('img/laserRed16.png').convert_alpha()
 bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
 
 # Carrega os sons do jogo
@@ -50,13 +66,18 @@ class Protag(pygame.sprite.Sprite):
         self.all_sprites = all_sprites
         self.all_bullets = all_bullets
         self.bullet_img = bullet_img
-        self.pew_sound =pew_sound
+        self.pew_sound = pew_sound
+        self.sentido_x = True
 
     
     def update(self):
         # Atualização da posição da protagonista
         self.rect.x += self.speedx
         self.rect.y += self.speedy
+        if self.speedx > 0:
+            self.sentido_x = True
+        if self.speedx < 0:
+            self.sentido_x = False
 
         #Contorno periodico
         if self.rect.right > WIDTH:
@@ -76,7 +97,8 @@ class Protag(pygame.sprite.Sprite):
     
     def shoot(self):
         pos_bullet = self.rect.top + 50
-        new_bullet = Bullet(self.bullet_img, pos_bullet, self.rect.centerx)
+        
+        new_bullet = Bullet(self.bullet_img, pos_bullet, self.rect.centerx, self.sentido_x)
         self.all_sprites.add(new_bullet)
         self.all_bullets.add(new_bullet)
         self.pew_sound.play()
@@ -108,8 +130,8 @@ class Enemy(pygame.sprite.Sprite):
 # Classe Bullet que representa os tiros
 class Bullet(pygame.sprite.Sprite):
     # Construtor da classe.
-    def __init__(self, img, bottom, centerx):
-        # Construtor da classe mãe (Sprite).
+    def __init__(self, img, bottom, centerx, sentido_x = True):
+        # Construtor da classe mãe (Sprite). 
         pygame.sprite.Sprite.__init__(self)
 
         self.image = img
@@ -118,17 +140,21 @@ class Bullet(pygame.sprite.Sprite):
         # Coloca no lugar inicial definido em x, y do constutor
         self.rect.centerx = centerx
         self.rect.bottom = bottom
-        self.speedy = 100 # Velocidade fixa para o lado
+        if sentido_x:
+            self.speedx = 100 # Velocidade fixa para o lado
+        else:
+            self.speedx = -100
 
 
     def update(self):
         # A bala só se move no eixo x
-        self.rect.x += self.speedy
+        self.rect.x += self.speedx
          
 
         # Se o tiro passar do inicio da tela, morre.
         if self.rect.bottom < 0:
             self.kill()
+
 
 
 # ----- Inicia estruturas de dados
@@ -174,13 +200,12 @@ while game:
                 player.speedx += 8
                 player.image = protag_img
                 bullet_img = bullet_img_mirror
-        
+
             if event.key == pygame.K_UP:
                 player.speedy -= 8
             if event.key == pygame.K_DOWN:
                 player.speedy += 8
             if event.key == pygame.K_SPACE:
-                
                 player.shoot()
                 bullet_img = bullet_img_mirror
         
@@ -232,3 +257,4 @@ while game:
 # ===== Finalização =====
 pygame.quit()  # Função do PyGame que finaliza os recursos utilizados
  
+  
