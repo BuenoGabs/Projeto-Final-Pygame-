@@ -44,12 +44,12 @@ protag_img_mirror = pygame.transform.flip(protag_img, True, False)
 bullet_img = pygame.image.load('img/laserRed16.png').convert_alpha()
 bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
 
-# Carrega os sons do jogo
+# Sons do game
 pygame.mixer.music.load('Backgroundmusic.mp3')
 pygame.mixer.music.set_volume(0.4)
-boom_sound = pygame.mixer.Sound('expl3.wav')
-destroy_sound = pygame.mixer.Sound('expl6.wav')
-pew_sound = pygame.mixer.Sound('pew.wav')
+dados['boom_sound'] = pygame.mixer.Sound('expl3.wav')
+dados['destroy_sound'] = pygame.mixer.Sound('expl6.wav')
+dados['pew_sound'] = pygame.mixer.Sound('pew.wav')
 
 
 class Protag(pygame.sprite.Sprite):
@@ -69,9 +69,11 @@ class Protag(pygame.sprite.Sprite):
         self.pew_sound = pew_sound
         self.sentido_x = True
 
+        self.last_shot = pygame.time.get_ticks()
+        self.shoot_ticks = 500
     
     def update(self):
-        # Atualização da posição da protagonista
+        # Atualização da posição do protagonista
         self.rect.x += self.speedx
         self.rect.y += self.speedy
         if self.speedx > 0:
@@ -101,7 +103,7 @@ class Protag(pygame.sprite.Sprite):
         new_bullet = Bullet(self.bullet_img, pos_bullet, self.rect.centerx, self.sentido_x)
         self.all_sprites.add(new_bullet)
         self.all_bullets.add(new_bullet)
-        self.pew_sound.play()
+        dados['pew_sound'].play()
 
         
 
@@ -127,7 +129,7 @@ class Enemy(pygame.sprite.Sprite):
             self.speedx = random.randint(-3, 3)
             self.speedy = random.randint(2, 9)
 
-# Classe Bullet que representa os tiros
+# Classe dos tiros
 class Bullet(pygame.sprite.Sprite):
     # Construtor da classe.
     def __init__(self, img, bottom, centerx, sentido_x = True):
@@ -155,6 +157,51 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+# Classe explosão
+class Explosion(pygame.sprite.Sprite):
+    # Construtor da classe.
+    def __init__(self, center, assets):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+
+        # Armazena a animação de explosão
+        self.explosion_anim = assets['explosion_anim']
+
+        # Inicia o processo de animação colocando a primeira imagem na tela.
+        self.frame = 0  # Armazena o índice atual na animação
+        self.image = self.explosion_anim[self.frame]  # Pega a primeira imagem
+        self.rect = self.image.get_rect()
+        self.rect.center = center  # Posiciona o centro da imagem
+
+        # Guarda o tick da primeira imagem, ou seja, o momento em que a imagem foi mostrada
+        self.last_update = pygame.time.get_ticks()
+        self.frame_ticks = 50
+
+    def update(self):
+        # Verifica o tick atual.
+        now = pygame.time.get_ticks()
+        # Verifica quantos ticks se passaram desde a ultima mudança de frame.
+        elapsed_ticks = now - self.last_update
+
+        # Se já está na hora de mudar de imagem...
+        if elapsed_ticks > self.frame_ticks:
+            # Marca o tick da nova imagem.
+            self.last_update = now
+
+            # Avança um quadro.
+            self.frame += 1
+
+            # Verifica se já chegou no final da animação.
+            if self.frame == len(self.explosion_anim):
+                # Se sim, tchau explosão!
+                self.kill()
+            else:
+                # Se ainda não chegou ao fim da explosão, troca de imagem.
+                center = self.rect.center
+                self.image = self.explosion_anim[self.frame]
+                self.rect = self.image.get_rect()
+                self.rect.center = center
+
 
 
 # ----- Inicia estruturas de dados
@@ -166,7 +213,7 @@ all_sprites = pygame.sprite.Group()
 all_enemy = pygame.sprite.Group()
 all_bullets = pygame.sprite.Group()
 # Criando o jogador
-player = Protag(protag_img, all_sprites, all_bullets, bullet_img, pew_sound)
+player = Protag(protag_img, all_sprites, all_bullets, bullet_img, dados) 
 all_sprites.add(player)
 bullet = Bullet(bullet_img, HEIGHT - 10, WIDTH / 2)  
 # Criando os inimigos
@@ -228,16 +275,20 @@ while game:
     all_sprites.update()
 
     hits = pygame.sprite.groupcollide(all_enemy, all_bullets, True, True)
-    for Inimigos in hits:
+    for inimigo in hits:
+        dados['destroy_sound'].play()
         I = Enemy(enemy_img)
         all_sprites.add(I)
         all_enemy.add(I)
 
-    # Verifica se houve colisão entre nave e meteoro
+        explosao = Explosion(inimigo.rect.center, dados)
+        all_sprites.add(explosao)
+
+    # Verifica se houve colisão 
     hits = pygame.sprite.spritecollide(player, all_enemy, True)
     if len(hits) > 0:
         # TOCA O SOM DA COLISÃO
-        boom_sound.play()
+        dados['boom_sound'].play()
         time.sleep(1)
 
         game = False
@@ -247,7 +298,7 @@ while game:
 
     # ----- Gera saídas
     window.fill((0, 0, 0))  # Preenche com a cor branca
-    window.blit(background, (0, 0))
+    window.blit(dados['background'], (0, 0))
     # Desenhando inimigos
     all_sprites.draw(window)
  
