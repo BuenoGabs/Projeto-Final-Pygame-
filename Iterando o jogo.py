@@ -2,7 +2,9 @@
 # ----- Importa e inicia pacotes
 import pygame
 import random
-import time 
+import time
+
+from pygame.sprite import Group 
 
 pygame.init()
 pygame.mixer.init()
@@ -25,6 +27,7 @@ dados['inimigo_img_small'] = pygame.transform.scale(dados['enemy_img'], (Inimigo
 dados['protag_img'] = pygame.image.load('img/megamen.png').convert_alpha()
 dados['protag_img'] = pygame.transform.scale(dados['protag_img'], (protag_WHIDTH, protag_HEIGHT))
 dados['bullet_img'] = pygame.image.load('img/laserRed16.png').convert_alpha()
+dados['img_humberto'] = pygame.image.load('img/humberto2.png').convert_alpha()
 explosion_anim = []
 for i in range(9):
     # Os arquivos de animação são numerados de 00 a 08
@@ -33,6 +36,7 @@ for i in range(9):
     img = pygame.transform.scale(img, (32, 32))
     explosion_anim.append(img)
 dados["explosion_anim"] = explosion_anim
+dados["score_font"] = pygame.font.Font('font/fonte/SuperMario256.ttf', 28)
 
 font = pygame.font.SysFont(None, 70)
 background = pygame.image.load('img/space.png').convert()  #carrega as imagens de fundo 
@@ -43,6 +47,8 @@ protag_img = pygame.transform.scale(protag_img, (protag_WHIDTH, protag_HEIGHT))
 protag_img_mirror = pygame.transform.flip(protag_img, True, False)
 bullet_img = pygame.image.load('img/laserRed16.png').convert_alpha()
 bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
+
+img_humberto = dados['img_humberto']
 
 # Sons do game
 pygame.mixer.music.load('Backgroundmusic.mp3')
@@ -70,7 +76,7 @@ class Protag(pygame.sprite.Sprite):
         self.sentido_x = True
 
         self.last_shot = pygame.time.get_ticks()
-        self.shoot_ticks = 500
+        self.shoot_ticks = 100
     
     def update(self):
         # Atualização da posição do protagonista
@@ -128,6 +134,29 @@ class Enemy(pygame.sprite.Sprite):
             self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
             self.speedx = random.randint(-3, 3)
             self.speedy = random.randint(2, 9)
+
+class Boss(Enemy):
+    def  __init__(self, img):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randint(0, WIDTH-Inimigo_WIDTH)
+        self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
+        self.speedx = random.randint(9, 16) * random.randint(-1, 1)
+        self.speedy = random.randint(9, 16) 
+
+    def update(self):
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy 
+
+
+        if self.rect.top > HEIGHT or self.rect.right < 0 or self.rect.left > WIDTH:
+            self.rect.x = random.randint(0, WIDTH-Inimigo_WIDTH)
+            self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
+            self.speedx = random.randint(9, 16) * random.randint(-1, 1)
+            self.speedy = random.randint(9, 16) 
+
 
 # Classe dos tiros
 class Bullet(pygame.sprite.Sprite):
@@ -207,20 +236,29 @@ class Explosion(pygame.sprite.Sprite):
 # ----- Inicia estruturas de dados
 game = True
 clock = pygame.time.Clock()
-FPS = 30
+FPS = 40
 
+all_boss = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 all_enemy = pygame.sprite.Group()
 all_bullets = pygame.sprite.Group()
+
 # Criando o jogador
 player = Protag(protag_img, all_sprites, all_bullets, bullet_img, dados) 
 all_sprites.add(player)
-bullet = Bullet(bullet_img, HEIGHT - 10, WIDTH / 2)  
+bullet = Bullet(bullet_img, HEIGHT - 10, WIDTH / 2)
+
+tem_boss = False
+
 # Criando os inimigos
 for i in range(8):
     Inimigo = Enemy(enemy_img)
     all_sprites.add(Inimigo)
     all_enemy.add(Inimigo)
+
+score = 0
+keys = {}
+vidas = 5
 
 # ===== Loop principal =====
 pygame.mixer.music.play(loops=-1)
@@ -276,13 +314,35 @@ while game:
 
     hits = pygame.sprite.groupcollide(all_enemy, all_bullets, True, True)
     for inimigo in hits:
-        dados['destroy_sound'].play()
-        I = Enemy(enemy_img)
-        all_sprites.add(I)
-        all_enemy.add(I)
+        if inimigo not in all_boss:
+            dados['destroy_sound'].play()
+            I = Enemy(enemy_img)
+            all_sprites.add(I)
+            all_enemy.add(I)
 
-        explosao = Explosion(inimigo.rect.center, dados)
-        all_sprites.add(explosao)
+            explosao = Explosion(inimigo.rect.center, dados)
+            all_sprites.add(explosao)
+            
+            #agréssimo de pontos 
+            score += 100
+        else:
+            dados['destroy_sound'].play()
+            B = Boss(img_humberto)
+            all_sprites.add(B)
+            all_boss.add(B)
+            explosao = Explosion(inimigo.rect.center, dados)
+            all_sprites.add(explosao)
+            score += 1000
+
+    if score >= 500 and tem_boss == False:
+        tem_boss = True
+        for i in range (2):
+            boss = Boss(img_humberto)
+            all_sprites.add(boss)
+            all_enemy.add(boss)
+            all_boss.add(boss)
+    
+
 
     # Verifica se houve colisão 
     hits = pygame.sprite.spritecollide(player, all_enemy, True)
@@ -301,11 +361,14 @@ while game:
     window.blit(dados['background'], (0, 0))
     # Desenhando inimigos
     all_sprites.draw(window)
+
+    text_surface = dados['score_font'].render("{:08d}".format(score), True, (255, 255, 255))
+    text_rect = text_surface.get_rect()
+    text_rect.midtop = (WIDTH / 10,  10)
+    window.blit(text_surface, text_rect)
  
 
     pygame.display.update()  # Mostra o novo frame para o jogador
 
 # ===== Finalização =====
 pygame.quit()  # Função do PyGame que finaliza os recursos utilizados
- 
-  
