@@ -75,7 +75,7 @@ all_sprites = pygame.sprite.Group()
 # Criando o jogador
 player =    Protag(protag_img)
 all_sprites.add(player)
-# Criando os meteoros
+# Criando os Inimigos
 for i in range(8):
     Inimigo = Enemy(enemy_img)
     all_sprites.add(Inimigo)
@@ -91,13 +91,13 @@ while game:
             game = False
 
     # ----- Atualiza estado do jogo
-    # Atualizando a posição dos meteoros
+    # Atualizando a posição dos Inimigos
     all_sprites.update()
 
     # ----- Gera saídas
     window.fill((0, 0, 0))  # Preenche com a cor branca
     window.blit(background, (0, 0))
-    # Desenhando meteoros
+    # Desenhando Inimigos
     all_sprites.draw(window)
 
     pygame.display.update()  # Mostra o novo frame para o jogador
