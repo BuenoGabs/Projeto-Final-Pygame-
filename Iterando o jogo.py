@@ -3,6 +3,7 @@
 import pygame
 import random
 import time
+# from CONFIG import BLACK
 
 from pygame.sprite import Group 
 
@@ -36,7 +37,7 @@ for i in range(9):
     img = pygame.transform.scale(img, (32, 32))
     explosion_anim.append(img)
 dados["explosion_anim"] = explosion_anim
-dados["score_font"] = pygame.font.Font('font/fonte/SuperMario256.ttf', 28)
+dados["score_font"] = pygame.font.Font('font/SuperMario256.ttf', 28)
 
 font = pygame.font.SysFont(None, 70)
 background = pygame.image.load('img/space.png').convert()  #carrega as imagens de fundo 
@@ -51,11 +52,61 @@ bullet_img_mirror = pygame.transform.flip(bullet_img, True, False)
 img_humberto = dados['img_humberto']
 
 # Sons do game
-pygame.mixer.music.load('Backgroundmusic.mp3')
+pygame.mixer.music.load('sons/Backgroundmusic.mp3')
 pygame.mixer.music.set_volume(0.4)
-dados['boom_sound'] = pygame.mixer.Sound('expl3.wav')
-dados['destroy_sound'] = pygame.mixer.Sound('expl6.wav')
-dados['pew_sound'] = pygame.mixer.Sound('pew.wav')
+dados['boom_sound'] = pygame.mixer.Sound('sons/expl3.wav')
+dados['destroy_sound'] = pygame.mixer.Sound('sons/expl6.wav')
+dados['pew_sound'] = pygame.mixer.Sound('sons/pew.wav')
+dados['oc'] = pygame.mixer.Sound('sons/oc.mp3')
+
+
+#----- MAIN MENU
+click = False
+def main_menu():
+    click = False
+    while True:
+        window.fill((0,0,0))
+    
+ 
+        mx, my = pygame.mouse.get_pos()
+ 
+        button_1 = pygame.Rect(0, 400, WIDTH, 75)
+        button_2 = pygame.Rect(0, 500, WIDTH, 75)
+
+        if button_1.collidepoint((mx, my)):
+            if click:
+                main_menu(window)
+
+        if button_2.collidepoint((mx, my)):
+            if click:
+                pygame.quit()
+                # sys.exit()
+
+       
+        click = False
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                # sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    # sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+        
+        window.fill(0,0,0)
+        window.blit(background, (0, 0))
+        pygame.draw.text('SHOTTO', font, (255, 255, 255), window, 600, 300)
+        pygame.draw.rect(window, (0, 0, 255), button_1)
+        pygame.draw.rect(window, (0, 0, 255), button_2)
+        pygame.draw.text('JOGAR', font, (255, 255, 255), window, 625, 420)       
+        pygame.draw.text('SAIR', font, (255, 255, 255), window, 640, 520)
+        pygame.display.update()
 
 
 class Protag(pygame.sprite.Sprite):
@@ -236,7 +287,7 @@ class Explosion(pygame.sprite.Sprite):
 # ----- Inicia estruturas de dados
 game = True
 clock = pygame.time.Clock()
-FPS = 40
+FPS = 30
 
 all_boss = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
@@ -251,7 +302,7 @@ bullet = Bullet(bullet_img, HEIGHT - 10, WIDTH / 2)
 tem_boss = False
 
 # Criando os inimigos
-for i in range(8):
+for i in range(5):
     Inimigo = Enemy(enemy_img)
     all_sprites.add(Inimigo)
     all_enemy.add(Inimigo)
@@ -260,9 +311,12 @@ score = 0
 keys = {}
 vidas = 5
 
+
 # ===== Loop principal =====
 pygame.mixer.music.play(loops=-1)
 while game:
+    cont_boss = score // 100
+
     clock.tick(FPS)
 
     direita = True
@@ -334,21 +388,21 @@ while game:
             all_sprites.add(explosao)
             score += 1000
 
-    if score >= 500 and tem_boss == False:
-        tem_boss = True
-        for i in range (2):
+    if  len(all_boss) < cont_boss: #score >= 100 and tem_boss == False:
+    #3tem_boss = True
             boss = Boss(img_humberto)
             all_sprites.add(boss)
             all_enemy.add(boss)
             all_boss.add(boss)
-    
-
+  
 
     # Verifica se houve colisão 
     hits = pygame.sprite.spritecollide(player, all_enemy, True)
     if len(hits) > 0:
         # TOCA O SOM DA COLISÃO
         dados['boom_sound'].play()
+        dados['oc'].play()
+        pygame.mixer.music.stop()
         time.sleep(1)
 
         game = False
@@ -362,13 +416,24 @@ while game:
     # Desenhando inimigos
     all_sprites.draw(window)
 
-    text_surface = dados['score_font'].render("{:08d}".format(score), True, (255, 255, 255))
+    text_surface = dados['score_font'].render("{:08d}".format(score), True, (0, 0, 0))
     text_rect = text_surface.get_rect()
     text_rect.midtop = (WIDTH / 10,  10)
     window.blit(text_surface, text_rect)
- 
 
     pygame.display.update()  # Mostra o novo frame para o jogador
 
-# ===== Finalização =====
-pygame.quit()  # Função do PyGame que finaliza os recursos utilizados
+while True:
+    game_over_font = pygame.font.Font('freesansbold.ttf', 50)
+    game_over_screen = game_over_font.render('Game Over', True, (255,255,255))
+    game_over_rect = game_over_screen.get_rect()
+    game_over_rect.midtop = (WIDTH  / 2,  HEIGHT / 2)
+    window.blit(game_over_screen, game_over_rect)
+    pygame.display.update()
+    pygame.time.wait(500)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
