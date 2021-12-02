@@ -3,8 +3,12 @@
 import pygame
 import random
 import time
+import sys 
+from GAME_SCREEN import game_screen
 
-from pygame.sprite import Group 
+from pygame.sprite import Group
+
+from GAME_SCREEN import game_screen 
 
 pygame.init()
 pygame.mixer.init()
@@ -62,7 +66,7 @@ click = False
 def main_menu():
     click = False
     while True:
-        screen.fill((0,0,0))
+        window.fill((0,0,0))
     
  
         mx, my = pygame.mouse.get_pos()
@@ -72,7 +76,7 @@ def main_menu():
 
         if button_1.collidepoint((mx, my)):
             if click:
-                game_screen(screen)
+                game_screen(window)
 
         if button_2.collidepoint((mx, my)):
             if click:
@@ -83,25 +87,25 @@ def main_menu():
         click = False
 
         for event in pygame.event.get():
-            if event.type == QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN:
-                if event.key == K_ESCAPE:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
 
-            if event.type == MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     click = True
         
-        screen.fill(BLACK)
-        screen.blit(background, (0, 0))
-        draw_text('SHOTTO', font, (255, 255, 255), screen, 600, 300)
-        pygame.draw.rect(screen, (0, 0, 255), button_1)
-        pygame.draw.rect(screen, (0, 0, 255), button_2)
-        draw_text('JOGAR', font, (255, 255, 255), screen, 625, 420)       
-        draw_text('SAIR', font, (255, 255, 255), screen, 640, 520)
+        window.fill(0,0,0)
+        window.blit(background, (0, 0))
+        pygame.draw_text('SHOTTO', font, (255, 255, 255), window, 600, 300)
+        pygame.draw.rect(window, (0, 0, 255), button_1)
+        pygame.draw.rect(window, (0, 0, 255), button_2)
+        pygame.draw_text('JOGAR', font, (255, 255, 255), window, 625, 420)       
+        pygame.draw_text('SAIR', font, (255, 255, 255), window, 640, 520)
         pygame.display.update()
 
 
