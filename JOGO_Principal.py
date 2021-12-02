@@ -3,6 +3,9 @@
 import pygame
 import random
 import time
+from pygame.constants import K_SPACE
+import sys 
+import shelve
 # from CONFIG import BLACK
 
 from pygame.sprite import Group 
@@ -59,56 +62,6 @@ dados['destroy_sound'] = pygame.mixer.Sound('sons/expl6.wav')
 dados['pew_sound'] = pygame.mixer.Sound('sons/pew.wav')
 dados['oc'] = pygame.mixer.Sound('sons/oc.mp3')
 
-
-#----- MAIN MENU
-click = False
-def main_menu():
-    click = False
-    while True:
-        window.fill((0,0,0))
-    
- 
-        mx, my = pygame.mouse.get_pos()
- 
-        button_1 = pygame.Rect(0, 400, WIDTH, 75)
-        button_2 = pygame.Rect(0, 500, WIDTH, 75)
-
-        if button_1.collidepoint((mx, my)):
-            if click:
-                main_menu(window)
-
-        if button_2.collidepoint((mx, my)):
-            if click:
-                pygame.quit()
-                # sys.exit()
-
-       
-        click = False
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                # sys.exit()
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    # sys.exit()
-
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    click = True
-        
-        window.fill(0,0,0)
-        window.blit(background, (0, 0))
-        pygame.draw.text('SHOTTO', font, (255, 255, 255), window, 600, 300)
-        pygame.draw.rect(window, (0, 0, 255), button_1)
-        pygame.draw.rect(window, (0, 0, 255), button_2)
-        pygame.draw.text('JOGAR', font, (255, 255, 255), window, 625, 420)       
-        pygame.draw.text('SAIR', font, (255, 255, 255), window, 640, 520)
-        pygame.display.update()
-
-
 class Protag(pygame.sprite.Sprite):
     def __init__(self, img, all_sprites, all_bullets, bullet_img, pew_sound):
         # Construtor da classe mãe (Sprite).
@@ -126,7 +79,7 @@ class Protag(pygame.sprite.Sprite):
         self.pew_sound = pew_sound
         self.sentido_x = True
 
-        self.last_shot = pygame.time.get_ticks()
+        self.last_shot = pygame.time.get_ticks() 
         self.shoot_ticks = 100
     
     def update(self):
@@ -173,8 +126,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH-Inimigo_WIDTH)
         self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
-        self.speedx = random.randint(-5, 3)
-        self.speedy = random.randint(2, 9)
+        self.speedx = random.randint(-3, 3)
+        self.speedy = random.randint(2, 4)
 
     def update(self):
         self.rect.x += self.speedx
@@ -194,8 +147,8 @@ class Boss(Enemy):
         self.rect = self.image.get_rect()
         self.rect.x = random.randint(0, WIDTH-Inimigo_WIDTH)
         self.rect.y = random.randint(-100, -Inimigo_HEIGHT)
-        self.speedx = random.randint(9, 16) * random.randint(-1, 1)
-        self.speedy = random.randint(9, 16) 
+        self.speedx = random.randint(5, 10) * random.randint(-1, 1)
+        self.speedy = random.randint(5, 10) 
 
     def update(self):
         self.rect.x += self.speedx
@@ -302,14 +255,14 @@ bullet = Bullet(bullet_img, HEIGHT - 10, WIDTH / 2)
 tem_boss = False
 
 # Criando os inimigos
-for i in range(5):
+for i in range(3):
     Inimigo = Enemy(enemy_img)
     all_sprites.add(Inimigo)
     all_enemy.add(Inimigo)
 
 score = 0
 keys = {}
-vidas = 5
+
 
 
 # ===== Loop principal =====
@@ -333,17 +286,17 @@ while game:
 
                 player.image = protag_img_mirror
                 bullet_img = bullet_img_mirror
-                player.speedx -= 8
+                player.speedx -= 10
                     
             if event.key == pygame.K_RIGHT:
-                player.speedx += 8
+                player.speedx += 10
                 player.image = protag_img
                 bullet_img = bullet_img_mirror
 
             if event.key == pygame.K_UP:
-                player.speedy -= 8
+                player.speedy -= 10
             if event.key == pygame.K_DOWN:
-                player.speedy += 8
+                player.speedy += 10
             if event.key == pygame.K_SPACE:
                 player.shoot()
                 bullet_img = bullet_img_mirror
@@ -352,13 +305,13 @@ while game:
         if event.type == pygame.KEYUP:
             # Dependendo da tecla, altera a velocidade.
             if event.key == pygame.K_LEFT:
-                player.speedx += 8
+                player.speedx += 10
             if event.key == pygame.K_RIGHT:
-                player.speedx -= 8
+                player.speedx -= 10
             if event.key == pygame.K_UP:
-                player.speedy += 8
+                player.speedy += 10
             if event.key == pygame.K_DOWN:
-                player.speedy -= 8
+                player.speedy -= 10
         
     
     # ----- Atualiza estado do jogo
@@ -379,14 +332,6 @@ while game:
             
             #agréssimo de pontos 
             score += 100
-        else:
-            dados['destroy_sound'].play()
-            B = Boss(img_humberto)
-            all_sprites.add(B)
-            all_boss.add(B)
-            explosao = Explosion(inimigo.rect.center, dados)
-            all_sprites.add(explosao)
-            score += 1000
 
     if  len(all_boss) < cont_boss: #score >= 100 and tem_boss == False:
     #3tem_boss = True
@@ -416,19 +361,47 @@ while game:
     # Desenhando inimigos
     all_sprites.draw(window)
 
-    text_surface = dados['score_font'].render("{:08d}".format(score), True, (0, 0, 0))
+    text_surface = dados['score_font'].render("{:010d}".format(score), True, (0, 0, 0))
     text_rect = text_surface.get_rect()
     text_rect.midtop = (WIDTH / 10,  10)
     window.blit(text_surface, text_rect)
 
     pygame.display.update()  # Mostra o novo frame para o jogador
 
+
+with open('score.txt', 'r', encoding='utf-8') as arquivo:
+    pontuacao_maxima = int(arquivo.read())
+
+if pontuacao_maxima < score:
+    with open('score.txt', 'w', encoding='utf-8') as arquivo:
+        arquivo.write(str(score))
+
+
 while True:
+    game_over_pont = pygame.font.Font('freesansbold.ttf', 20)
+    game_over_pontos = game_over_pont.render(f'Sua pontuação: {score}', True, ((127, 255, 0)))
+    game_over_rect = game_over_pontos.get_rect()
+    game_over_rect.midtop = (700, 340)
+    print(game_over_rect.midtop)
+    window.blit(game_over_pontos, game_over_rect)
+    pygame.display.update()
+    pygame.time.wait(500)
+
+    game_over_pont = pygame.font.Font('freesansbold.ttf', 20)
+    game_over_pontos = game_over_pont.render(f'Pontuação máxima: {pontuacao_maxima}', True, ((127, 255, 0)))
+    game_over_rect = game_over_pontos.get_rect()
+    game_over_rect.midtop = (700, 360)
+    print(game_over_rect.midtop)
+    window.blit(game_over_pontos, game_over_rect)
+    pygame.display.update()
+    pygame.time.wait(500)
+
     game_over_font = pygame.font.Font('freesansbold.ttf', 50)
-    game_over_screen = game_over_font.render('Game Over', True, (255,255,255))
+    game_over_screen = game_over_font.render('Game Over', True, (255,0,0))
     game_over_rect = game_over_screen.get_rect()
     game_over_rect.midtop = (WIDTH  / 2,  HEIGHT / 2)
     window.blit(game_over_screen, game_over_rect)
+    print(game_over_rect.midtop)
     pygame.display.update()
     pygame.time.wait(500)
     while True:
